@@ -31,11 +31,20 @@ public class LoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // FIX: Thêm .trim() để cắt khoảng trắng vô tình nhập phải
         String email = request.getParameter("email");
+        if (email != null) {
+            email = email.trim();
+        }
+
         String pass = request.getParameter("password");
+        if (pass != null) {
+            pass = pass.trim();
+        }
+
         String remember = request.getParameter("remember");
 
-        System.out.println("DEBUG: Đang thử login với Email: " + email + " | Pass: " + pass);
+        System.out.println("DEBUG: Đang thử login với Email: [" + email + "] | Pass: [" + pass + "]");
 
         UserDAO dao = new UserDAO();
         User user = dao.checkLogin(email, pass);

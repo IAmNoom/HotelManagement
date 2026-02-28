@@ -25,9 +25,8 @@ public class RegisterServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setCharacterEncoding("UTF-8"); // Để nhận tên tiếng Việt
+        request.setCharacterEncoding("UTF-8");
 
-        // Thêm .trim() để xóa dấu cách thừa ở đầu và cuối chữ
         String fullName = request.getParameter("fullName");
         if (fullName != null) {
             fullName = fullName.trim();
@@ -41,7 +40,6 @@ public class RegisterServlet extends HttpServlet {
         String pass = request.getParameter("password");
         String confirmPass = request.getParameter("confirmPassword");
 
-        // 1. Validate cơ bản
         if (pass == null || !pass.equals(confirmPass)) {
             request.setAttribute("error", "Mật khẩu xác nhận không khớp!");
             request.getRequestDispatcher("register.jsp").forward(request, response);
@@ -50,52 +48,51 @@ public class RegisterServlet extends HttpServlet {
 
         UserDAO dao = new UserDAO();
 
-        // 2. Kiểm tra email tồn tại chưa
         if (dao.checkEmailExist(email)) {
             request.setAttribute("error", "Email này đã được sử dụng!");
             request.getRequestDispatcher("register.jsp").forward(request, response);
         } else {
-            // 3. Đăng ký vào DB
-            dao.register(fullName, email, pass);
+            // FIX: Nhận kết quả boolean từ hàm register
+            boolean isSuccess = dao.register(fullName, email, pass);
 
-            // --- BƯỚC QUAN TRỌNG: TỰ ĐỘNG ĐĂNG NHẬP & NHỚ MK ---
-            // a. Lấy User vừa tạo ra từ DB
-            User user = dao.getUserByEmail(email);
+            if (isSuccess) {
+                // NẾU DATABASE LƯU THÀNH CÔNG -> Tự động đăng nhập
+                User user = dao.getUserByEmail(email);
 
-            if (user != null) {
-                // b. Tạo Session (Đăng nhập luôn)
-                HttpSession session = request.getSession();
-                session.setAttribute("account", user);
-                session.setMaxInactiveInterval(1800);
+                if (user != null) {
+                    HttpSession session = request.getSession();
+                    session.setAttribute("account", user);
+                    session.setMaxInactiveInterval(1800);
 
-                // c. Tạo Cookie (Lưu mật khẩu luôn)
-                String encodedEmail = URLEncoder.encode(email, "UTF-8");
-                String encodedPass = URLEncoder.encode(pass, "UTF-8");
+                    String encodedEmail = URLEncoder.encode(email, "UTF-8");
+                    String encodedPass = URLEncoder.encode(pass, "UTF-8");
 
-                Cookie c_user = new Cookie("uName", encodedEmail);
-                Cookie c_pass = new Cookie("uPass", encodedPass);
-                Cookie c_rem = new Cookie("uRem", "on");
+                    Cookie c_user = new Cookie("uName", encodedEmail);
+                    Cookie c_pass = new Cookie("uPass", encodedPass);
+                    Cookie c_rem = new Cookie("uRem", "on");
 
-                // Set thời gian 7 ngày
-                int age = 60 * 60 * 24 * 7;
-                c_user.setMaxAge(age);
-                c_pass.setMaxAge(age);
-                c_rem.setMaxAge(age);
+                    int age = 60 * 60 * 24 * 7;
+                    c_user.setMaxAge(age);
+                    c_pass.setMaxAge(age);
+                    c_rem.setMaxAge(age);
 
-                // Set đường dẫn toàn trang
-                c_user.setPath("/");
-                c_pass.setPath("/");
-                c_rem.setPath("/");
+                    c_user.setPath("/");
+                    c_pass.setPath("/");
+                    c_rem.setPath("/");
 
-                // Gửi cookie về trình duyệt
-                response.addCookie(c_user);
-                response.addCookie(c_pass);
-                response.addCookie(c_rem);
+                    response.addCookie(c_user);
+                    response.addCookie(c_pass);
+                    response.addCookie(c_rem);
+                }
+
+                // Chuyển về trang chủ
+                response.sendRedirect(request.getContextPath() + "/home");
+
+            } else {
+                // NẾU DATABASE TỪ CHỐI LƯU (Bị lỗi SQL)
+                request.setAttribute("error", "Hệ thống từ chối lưu! Vui lòng kiểm tra lỗi SQL màu đỏ trong Output của NetBeans.");
+                request.getRequestDispatcher("register.jsp").forward(request, response);
             }
-            // ---------------------------------------------------
-
-            // 4. FIX: Chuyển thẳng về trang chủ dùng đường dẫn tuyệt đối (getContextPath)
-            response.sendRedirect(request.getContextPath() + "/home");
         }
     }
 }

@@ -4,6 +4,9 @@ import com.khoana.hotelmanagement.model.User;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+
+import java.util.List;
 
 public class UserDAO extends DBContext {
 
@@ -83,24 +86,30 @@ public class UserDAO extends DBContext {
     }
 
     // 4. Hàm Đăng ký (Người dùng tự đăng ký có password)
-    public void register(String fullName, String email, String password) {
+    // ĐÃ SỬA: Đổi từ void sang boolean để báo lại cho Servlet biết có thành công hay không
+    public boolean register(String fullName, String email, String password) {
         String sql = "INSERT INTO Users (fullName, email, password, roleID) VALUES (?, ?, ?, 2)";
         try {
             if (connection == null) {
-                return;
+                return false;
             }
 
             PreparedStatement st = connection.prepareStatement(sql);
             st.setNString(1, fullName);
             st.setString(2, email);
             st.setString(3, password);
-            st.executeUpdate();
 
-            System.out.println("Đã đăng ký thành công user: " + email);
+            // executeUpdate trả về số dòng bị ảnh hưởng, nếu > 0 tức là đã thêm thành công
+            int rowsAffected = st.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Đã đăng ký thành công user: " + email);
+                return true;
+            }
         } catch (SQLException e) {
             System.out.println("Lỗi register: " + e.getMessage());
             e.printStackTrace();
         }
+        return false; // Trả về false nếu có lỗi xảy ra
     }
 
     // 5. Hàm Đổi Mật Khẩu
@@ -144,6 +153,67 @@ public class UserDAO extends DBContext {
             System.out.println("Đã đăng ký thành công Google user: " + email);
         } catch (SQLException e) {
             System.out.println("Lỗi registerGoogleUser: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // 7. Hàm lấy danh sách toàn bộ người dùng (Để Admin xem)
+    public List<User> getAllUsers() {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM Users";
+        try {
+            if (connection == null) {
+                return list;
+            }
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new User(
+                        rs.getInt("userID"), // Chú ý: Map cột userID vào biến id của Java
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("password"),
+                        rs.getInt("roleID")
+                ));
+            }
+        } catch (SQLException e) {
+            System.out.println("Lỗi getAllUsers: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // 8. Hàm Xóa người dùng theo ID (Dành cho Admin)
+    public void deleteUser(int id) {
+        String sql = "DELETE FROM Users WHERE userID = ?";
+        try {
+            if (connection == null) {
+                return;
+            }
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            System.out.println("Đã xóa thành công user ID: " + id);
+        } catch (SQLException e) {
+            System.out.println("Lỗi deleteUser: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // 9. Hàm Thay đổi quyền (Ví dụ: Đổi roleID từ 2 lên 1)
+    public void changeUserRole(int id, int newRoleID) {
+        String sql = "UPDATE Users SET roleID = ? WHERE userID = ?";
+        try {
+            if (connection == null) {
+                return;
+            }
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, newRoleID);
+            ps.setInt(2, id);
+            ps.executeUpdate();
+            System.out.println("Đã đổi quyền thành công cho user ID: " + id);
+        } catch (SQLException e) {
+            System.out.println("Lỗi changeUserRole: " + e.getMessage());
             e.printStackTrace();
         }
     }

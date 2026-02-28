@@ -3,7 +3,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <%
- 
+
     String cookieEmail = "";
     String cookiePass = "";
     String cookieRem = "";
@@ -11,7 +11,7 @@
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {
         for (Cookie c : cookies) {
-            
+
             if (c.getName().equals("uName")) {
                 cookieEmail = URLDecoder.decode(c.getValue(), "UTF-8");
             }
@@ -24,7 +24,6 @@
         }
     }
 
-  
     String inputEmail = (String) request.getAttribute("email");
     if (inputEmail != null) {
         cookieEmail = inputEmail;
