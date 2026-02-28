@@ -1,5 +1,6 @@
 package com.khoana.hotelmanagement.controller.admin;
 
+import javax.servlet.*;
 import com.khoana.hotelmanagement.dal.RoomDAO;
 import com.khoana.hotelmanagement.model.Room;
 import java.io.IOException;
@@ -64,24 +65,35 @@ public class RoomManagerServlet extends HttpServlet {
 
         try {
             if ("insert".equals(action)) {
-              
-                Room newRoom = new Room(0,
+                // Ép kiểu typeID từ chuỗi sang số nguyên
+                int typeID = Integer.parseInt(request.getParameter("typeID"));
+                
+                Room newRoom = new Room(
+                        0, // roomID tự tăng nên để 0
                         request.getParameter("roomNumber"),
-                        request.getParameter("roomType"),
+                        typeID,
+                        "", // typeName không cần khi insert, để rỗng
                         Double.parseDouble(request.getParameter("price")),
                         request.getParameter("status"),
                         request.getParameter("description"),
-                        request.getParameter("image"));
+                        request.getParameter("image")
+                );
                 dao.addRoom(newRoom);
 
             } else if ("update".equals(action)) {
-                Room room = new Room(Integer.parseInt(request.getParameter("id")),
+                // Ép kiểu typeID từ chuỗi sang số nguyên
+                int typeID = Integer.parseInt(request.getParameter("typeID"));
+                
+                Room room = new Room(
+                        Integer.parseInt(request.getParameter("id")),
                         request.getParameter("roomNumber"),
-                        request.getParameter("roomType"),
+                        typeID,
+                        "", // typeName không cần khi update, để rỗng
                         Double.parseDouble(request.getParameter("price")),
                         request.getParameter("status"),
                         request.getParameter("description"),
-                        request.getParameter("image"));
+                        request.getParameter("image")
+                );
                 dao.updateRoom(room);
             }
         } catch (Exception e) {

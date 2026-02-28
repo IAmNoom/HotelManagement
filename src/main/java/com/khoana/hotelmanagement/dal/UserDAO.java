@@ -4,6 +4,8 @@ import com.khoana.hotelmanagement.model.User;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDAO extends DBContext {
 
@@ -144,6 +146,61 @@ public class UserDAO extends DBContext {
             System.out.println("Đã đăng ký thành công Google user: " + email);
         } catch (SQLException e) {
             System.out.println("Lỗi registerGoogleUser: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    // 7. Hàm lấy danh sách toàn bộ người dùng (Để Admin xem)
+    public List<User> getAllUsers() {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM Users";
+        try {
+            if (connection == null) return list;
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new User(
+                        rs.getInt("userID"), // Chú ý: Map cột userID vào biến id của Java
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("password"),
+                        rs.getInt("roleID")
+                ));
+            }
+        } catch (SQLException e) {
+            System.out.println("Lỗi getAllUsers: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // 8. Hàm Xóa người dùng theo ID (Dành cho Admin)
+    public void deleteUser(int id) {
+        String sql = "DELETE FROM Users WHERE userID = ?";
+        try {
+            if (connection == null) return;
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            System.out.println("Đã xóa thành công user ID: " + id);
+        } catch (SQLException e) {
+            System.out.println("Lỗi deleteUser: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // 9. Hàm Thay đổi quyền (Ví dụ: Đổi roleID từ 2 lên 1)
+    public void changeUserRole(int id, int newRoleID) {
+        String sql = "UPDATE Users SET roleID = ? WHERE userID = ?";
+        try {
+            if (connection == null) return;
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, newRoleID);
+            ps.setInt(2, id);
+            ps.executeUpdate();
+            System.out.println("Đã đổi quyền thành công cho user ID: " + id);
+        } catch (SQLException e) {
+            System.out.println("Lỗi changeUserRole: " + e.getMessage());
             e.printStackTrace();
         }
     }

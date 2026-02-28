@@ -13,7 +13,7 @@ public class DBContext {
     public DBContext() {
         try {
             String user = "sa";
-            String pass = "Hh121213";
+            String pass = "123";
             // Thêm loginTimeout=10 để không bị treo web nếu sai cổng hoặc sai pass
             String url = "jdbc:sqlserver://localhost:1433;databaseName=MarriottClone;encrypt=true;trustServerCertificate=true;loginTimeout=10;";
 

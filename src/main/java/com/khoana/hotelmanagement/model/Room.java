@@ -4,8 +4,9 @@ public class Room {
 
     
     private int roomID;   
-    private String roomNumber;  
-    private String roomType;    
+    private String roomNumber; 
+    private int typeID;
+    private String typeName;    
     private double price;
     private String status;      
     private String description; 
@@ -14,10 +15,11 @@ public class Room {
     public Room() {
     }
 
-    public Room(int roomID, String roomNumber, String roomType, double price, String status, String description, String image) {
+    public Room(int roomID, String roomNumber, int typeID, String typeName, double price, String status, String description, String image) {
         this.roomID = roomID;
         this.roomNumber = roomNumber;
-        this.roomType = roomType;
+        this.typeID = typeID;
+        this.typeName = typeName;
         this.price = price;
         this.status = status;
         this.description = description;
@@ -41,13 +43,11 @@ public class Room {
         this.roomNumber = roomNumber;
     }
 
-    public String getRoomType() {
-        return roomType;
-    }
+    public int getTypeID() { return typeID; }
+    public void setTypeID(int typeID) { this.typeID = typeID; }
 
-    public void setRoomType(String roomType) {
-        this.roomType = roomType;
-    }
+    public String getTypeName() { return typeName; }
+    public void setTypeName(String typeName) { this.typeName = typeName; }
 
     public double getPrice() {
         return price;
@@ -83,6 +83,6 @@ public class Room {
 
     @Override
     public String toString() {
-        return "Room{" + "roomID=" + roomID + ", roomNumber=" + roomNumber + ", roomType=" + roomType + ", price=" + price + ", status=" + status + '}';
+        return "Room{" + "roomID=" + roomID + ", roomNumber=" + roomNumber + ", typeID=" + typeID + ", typeName=" + typeName + ", price=" + price + ", status=" + status + '}';
     }
 }
