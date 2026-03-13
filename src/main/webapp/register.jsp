@@ -70,10 +70,12 @@
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
                 transition: all 0.3s ease;
+                border: none;
             }
 
             .btn-marriott:hover {
                 background-color: #b31b1b;
+                color: #fff;
             }
 
             .link-text {
@@ -105,12 +107,12 @@
 
             <form action="register" method="POST">
                 <div class="form-floating mb-3">
-                    <input type="text" class="form-control" name="fullName" placeholder="Full Name" required>
+                    <input type="text" class="form-control" name="fullName" placeholder="Full Name" value="${param.fullName}" required>
                     <label>Full Name</label>
                 </div>
 
                 <div class="form-floating mb-3">
-                    <input type="email" class="form-control" name="email" placeholder="Email" required>
+                    <input type="email" class="form-control" name="email" placeholder="Email" value="${param.email}" required>
                     <label>Email Address</label>
                 </div>
 

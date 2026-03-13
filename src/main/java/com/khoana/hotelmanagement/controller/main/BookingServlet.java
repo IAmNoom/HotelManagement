@@ -37,19 +37,18 @@ public class BookingServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         // 1. Kiểm tra xem người dùng đã login chưa
         HttpSession session = request.getSession();
-        User currentUser = (User) session.getAttribute("account"); // Giả sử FE lưu session tên là 'account'
-        
+        User currentUser = (User) session.getAttribute("account");
+
         if (currentUser == null) {
-            // Chưa login thì đá về trang login
             response.sendRedirect(request.getContextPath() + "/login.jsp");
             return;
         }
 
         try {
-            // 2. Lấy dữ liệu từ form đặt phòng (FE gửi lên)
+            // 2. Lấy dữ liệu từ form đặt phòng
             int roomID = Integer.parseInt(request.getParameter("roomID"));
             String checkInStr = request.getParameter("checkIn");
             String checkOutStr = request.getParameter("checkOut");
@@ -57,14 +56,12 @@ public class BookingServlet extends HttpServlet {
             // 3. LOGIC TÍNH TIỀN: Tính số ngày lưu trú
             LocalDate checkInDate = LocalDate.parse(checkInStr);
             LocalDate checkOutDate = LocalDate.parse(checkOutStr);
-            
-            // Tính khoảng cách giữa 2 ngày
+
             long daysBetween = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
             if (daysBetween <= 0) {
-                daysBetween = 1; // Ở trong ngày tính là 1 ngày
+                daysBetween = 1;
             }
 
-            // Gọi RoomDAO lấy giá phòng từ DB (Lấy từ DB cho an toàn, không lấy giá từ FE để tránh bị hack đổi giá)
             RoomDAO roomDAO = new RoomDAO();
             Room room = roomDAO.getRoomByID(roomID);
             double totalPrice = daysBetween * room.getPrice();
@@ -73,35 +70,33 @@ public class BookingServlet extends HttpServlet {
             Booking newBooking = new Booking();
             newBooking.setUserID(currentUser.getId());
             newBooking.setRoomID(roomID);
-            newBooking.setCheckInDate(Date.valueOf(checkInDate)); // Chuyển LocalDate sang java.sql.Date
+            newBooking.setCheckInDate(Date.valueOf(checkInDate));
             newBooking.setCheckOutDate(Date.valueOf(checkOutDate));
             newBooking.setTotalPrice(totalPrice);
-            newBooking.setStatus("Pending"); // Mặc định đơn mới là Pending(Chờ duyệt)
+            newBooking.setStatus("Pending");
 
             BookingDAO bookingDAO = new BookingDAO();
             boolean isSuccess = bookingDAO.insertBooking(newBooking);
 
             // 5. Điều hướng kết quả: Thêm gửi Email và tạo link VNPay
             if (isSuccess) {
-                // --- 5.1: Gửi Email ---
+                // --- 5.1: Gửi Email Bằng Giao Diện HTML Xịn Xò ---
                 String userEmail = currentUser.getEmail();
                 if (userEmail != null && !userEmail.trim().isEmpty() && userEmail.contains("@")) {
                     try {
-                        String emailContent = "Chào " + currentUser.getFullName() + ",<br>"
-                                + "Bạn đã đặt phòng thành công từ ngày " + checkInStr + " đến " + checkOutStr + ".<br>"
-                                + "Tổng tiền: " + totalPrice + " VNĐ.<br>"
-                                + "Vui lòng hoàn tất thanh toán để chúng tôi giữ phòng cho bạn.";
-                        EmailUtils.sendEmail(userEmail, "Xác nhận đặt phòng - Chờ thanh toán", emailContent);
+                        String roomName = "Phòng " + room.getRoomNumber();
+                        EmailUtils.sendBookingConfirmEmail(userEmail, currentUser.getFullName(), roomName, checkInStr, checkOutStr, totalPrice);
                     } catch (Exception e) {
                         System.out.println("Lỗi gửi email cho: " + userEmail);
+                        e.printStackTrace();
                     }
                 }
 
                 // --- 5.2: Chuẩn bị thông số gửi sang VNPay ---
                 int latestBookingID = bookingDAO.getLatestBookingID(currentUser.getId());
-                long amount = (long) (totalPrice * 100); // VNPay yêu cầu nhân 100
-                String vnp_TxnRef = Config.getRandomNumber(8); // Mã giao dịch ngẫu nhiên
-                
+                long amount = (long) (totalPrice * 100);
+                String vnp_TxnRef = Config.getRandomNumber(8);
+
                 Map<String, String> vnp_Params = new HashMap<>();
                 vnp_Params.put("vnp_Version", "2.1.0");
                 vnp_Params.put("vnp_Command", "pay");
@@ -109,8 +104,7 @@ public class BookingServlet extends HttpServlet {
                 vnp_Params.put("vnp_Amount", String.valueOf(amount));
                 vnp_Params.put("vnp_CurrCode", "VND");
                 vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-                //Gắn bookingID vào OrderInfo để lúc VNPay trả về mình biết cập nhật đơn nào
-                vnp_Params.put("vnp_OrderInfo", String.valueOf(latestBookingID)); 
+                vnp_Params.put("vnp_OrderInfo", String.valueOf(latestBookingID));
                 vnp_Params.put("vnp_OrderType", "other");
                 vnp_Params.put("vnp_Locale", "vn");
                 vnp_Params.put("vnp_ReturnUrl", Config.vnp_ReturnUrl);
@@ -120,8 +114,8 @@ public class BookingServlet extends HttpServlet {
                 Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
                 SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
                 vnp_Params.put("vnp_CreateDate", formatter.format(cld.getTime()));
-                
-                cld.add(Calendar.MINUTE, 15); // Cho khách 15 phút để thanh toán
+
+                cld.add(Calendar.MINUTE, 15);
                 vnp_Params.put("vnp_ExpireDate", formatter.format(cld.getTime()));
 
                 // --- 5.4: Băm mã bảo mật và tạo URL ---
@@ -142,7 +136,7 @@ public class BookingServlet extends HttpServlet {
                         }
                     }
                 }
-                
+
                 String queryUrl = query.toString();
                 String vnp_SecureHash = Config.hmacSHA512(Config.vnp_HashSecret, hashData.toString());
                 queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
@@ -160,10 +154,10 @@ public class BookingServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home.jsp?error=invalid_data");
         }
     }
-    
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.sendRedirect(request.getContextPath() + "/home.jsp");
-    }  
+    }
 }

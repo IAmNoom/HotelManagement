@@ -85,24 +85,28 @@ public class UserDAO extends DBContext {
     }
 
     // 4. Hàm Đăng ký (Người dùng tự đăng ký có password)
-    public void register(String fullName, String email, String password) {
+    public boolean register(String fullName, String email, String password) {
         String sql = "INSERT INTO Users (fullName, email, password, roleID) VALUES (?, ?, ?, 2)";
         try {
             if (connection == null) {
-                return;
+                return false;
             }
 
             PreparedStatement st = connection.prepareStatement(sql);
             st.setNString(1, fullName);
             st.setString(2, email);
             st.setString(3, password);
-            st.executeUpdate();
 
-            System.out.println("Đã đăng ký thành công user: " + email);
+            int rowsAffected = st.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Đã đăng ký thành công user: " + email);
+                return true;
+            }
         } catch (SQLException e) {
             System.out.println("Lỗi register: " + e.getMessage());
             e.printStackTrace();
         }
+        return false; 
     }
 
     // 5. Hàm Đổi Mật Khẩu
@@ -125,11 +129,8 @@ public class UserDAO extends DBContext {
         }
     }
 
-    // 6. MỚI: Hàm Đăng ký cho người dùng từ Google (Không có password)
+    // 6. Hàm Đăng ký cho người dùng từ Google (Không có password)
     public void registerGoogleUser(String fullName, String email) {
-        // Gán một mật khẩu mặc định (ví dụ rỗng hoặc một chuỗi cố định)
-        // Lưu ý: Đảm bảo cột 'password' trong DB cho phép rỗng (NULL) HOẶC sử dụng giá trị mặc định.
-        // Ở đây tôi truyền một chuỗi rỗng để tránh lỗi NULL nếu DB bắt buộc.
         String defaultPassword = "";
         String sql = "INSERT INTO Users (fullName, email, password, roleID) VALUES (?, ?, ?, 2)";
         try {
@@ -149,18 +150,20 @@ public class UserDAO extends DBContext {
             e.printStackTrace();
         }
     }
-    
+
     // 7. Hàm lấy danh sách toàn bộ người dùng (Để Admin xem)
     public List<User> getAllUsers() {
         List<User> list = new ArrayList<>();
         String sql = "SELECT * FROM Users";
         try {
-            if (connection == null) return list;
+            if (connection == null) {
+                return list;
+            }
             PreparedStatement ps = connection.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 list.add(new User(
-                        rs.getInt("userID"), // Chú ý: Map cột userID vào biến id của Java
+                        rs.getInt("userID"), 
                         rs.getString("fullName"),
                         rs.getString("email"),
                         rs.getString("password"),
@@ -178,7 +181,9 @@ public class UserDAO extends DBContext {
     public void deleteUser(int id) {
         String sql = "DELETE FROM Users WHERE userID = ?";
         try {
-            if (connection == null) return;
+            if (connection == null) {
+                return;
+            }
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -189,11 +194,13 @@ public class UserDAO extends DBContext {
         }
     }
 
-    // 9. Hàm Thay đổi quyền (Ví dụ: Đổi roleID từ 2 lên 1)
+    // 9. Hàm Thay đổi quyền
     public void changeUserRole(int id, int newRoleID) {
         String sql = "UPDATE Users SET roleID = ? WHERE userID = ?";
         try {
-            if (connection == null) return;
+            if (connection == null) {
+                return;
+            }
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.setInt(1, newRoleID);
             ps.setInt(2, id);

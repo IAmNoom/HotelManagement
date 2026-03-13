@@ -24,24 +24,30 @@ public class SearchServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        String checkIn = request.getParameter("checkIn");
-        String checkOut = request.getParameter("checkOut");
-        
+
+        // 1. Lấy dữ liệu từ form (Viết thường cho khớp với name="checkin" trong HTML)
+        String checkin = request.getParameter("checkin");
+        String checkout = request.getParameter("checkout");
+        String guests = request.getParameter("guests");
+
         RoomDAO roomDAO = new RoomDAO();
         List<Room> roomList;
 
-        if (checkIn == null || checkOut == null || checkIn.trim().isEmpty() || checkOut.trim().isEmpty()) {
+        // 2. Logic tìm kiếm phòng
+        if (checkin == null || checkout == null || checkin.trim().isEmpty() || checkout.trim().isEmpty()) {
             roomList = roomDAO.getAllRooms();
         } else {
-            roomList = roomDAO.searchAvailableRoom(checkIn, checkOut);
+            roomList = roomDAO.searchAvailableRoom(checkin, checkout);
         }
 
-        request.setAttribute("roomList", roomList); 
-        request.setAttribute("checkIn", checkIn);   
-        request.setAttribute("checkOut", checkOut); 
-        
-        request.getRequestDispatcher("search.jsp").forward(request, response);
+        // 3. Truyền dữ liệu sang search.jsp
+        request.setAttribute("availableRooms", roomList); 
+        request.setAttribute("checkin", checkin);
+        request.setAttribute("checkout", checkout);
+        request.setAttribute("guests", guests);
+
+        // 4. Chuyển hướng sang giao diện
+        request.getRequestDispatcher("/search.jsp").forward(request, response);
     }
 
     @Override
