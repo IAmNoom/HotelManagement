@@ -1,77 +1,166 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%
-    String ctx = request.getContextPath();
-%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
-<html lang="vi">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Kết quả tìm kiếm - Marriott Hotel</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="<%=ctx%>/assets/css/style.css" />
-    </head>
-    <body class="bg-light">
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm Kiếm Phòng - Hotel Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
 
-        <jsp:include page="/includes/header.jsp"/>
-
-        <div class="container mt-5 mb-5" style="min-height: 60vh;">
-            <h2 class="mb-4 text-center fw-bold" style="color: #0056b3;">KẾT QUẢ TÌM KIẾM PHÒNG</h2>
-
-            <div class="alert alert-info text-center shadow-sm">
-                Bạn đang tìm phòng từ ngày <strong class="text-danger">${param.checkin}</strong> 
-                đến <strong class="text-danger">${param.checkout}</strong> 
-                cho <strong>${param.guests}</strong> khách.
+</head>
+<body>
+    <jsp:include page="includes/header.jsp" />
+    <div class="container">
+        <!-- Sidebar Filters -->
+        <aside class="sidebar">
+            <form method="GET" action="search">
+                <!-- Loại phòng -->
+                <div class="filter-group">
+                    <h3>Loại Phòng</h3>
+                    <label>
+                        <input type="checkbox" name="roomType" value="single">
+                        Phòng Đơn
+                    </label>
+                    <label>
+                        <input type="checkbox" name="roomType" value="double">
+                        Phòng Đôi
+                    </label>
+                    <label>
+                        <input type="checkbox" name="roomType" value="suite">
+                        Phòng Suite
+                    </label>
+                </div>
+                
+                <!-- Giá -->
+                <div class="filter-group">
+                    <h3>Khoảng Giá</h3>
+                    <div class="price-range">
+                        <input type="number" name="priceMin" placeholder="Từ" min="0">
+                        <span>-</span>
+                        <input type="number" name="priceMax" placeholder="Đến" min="0">
+                    </div>
+                </div>
+                
+                <!-- Tiện ích -->
+                <div class="filter-group">
+                    <h3>Tiện Ích</h3>
+                    <label>
+                        <input type="checkbox" name="amenities" value="wifi">
+                        WiFi Miễn Phí
+                    </label>
+                    <label>
+                        <input type="checkbox" name="amenities" value="aircon">
+                        Điều Hòa
+                    </label>
+                    <label>
+                        <input type="checkbox" name="amenities" value="tv">
+                        TV Màn Hình Phẳng
+                    </label>
+                    <label>
+                        <input type="checkbox" name="amenities" value="minibar">
+                        Mini Bar
+                    </label>
+                </div>
+                
+                <!-- Xếp hạng -->
+                <div class="filter-group">
+                    <h3>Xếp Hạng</h3>
+                    <label>
+                        <input type="radio" name="rating" value="5">
+                        ⭐⭐⭐⭐⭐ (5 sao)
+                    </label>
+                    <label>
+                        <input type="radio" name="rating" value="4">
+                        ⭐⭐⭐⭐ (4 sao trở lên)
+                    </label>
+                    <label>
+                        <input type="radio" name="rating" value="3">
+                        ⭐⭐⭐ (3 sao trở lên)
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                    Áp Dụng Bộ Lọc
+                </button>
+            </form>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Header -->
+            <div class="search-header">
+                <h2>Kết Quả Tìm Kiếm</h2>
+                <p class="search-info">
+                    Từ: <strong>01/01/2024</strong> | Đến: <strong>05/01/2024</strong> | 
+                    <strong id="roomCount">0</strong> phòng khả dụng
+                </p>
             </div>
-
-            <div class="row g-4 mt-3">
-                <%-- Kiểm tra nếu không có phòng nào --%>
-                <c:choose>
-                    <c:when test="${empty availableRooms}">
-                        <div class="col-12 text-center mt-5">
-                            <h4 class="text-danger">Rất tiếc, hệ thống chưa tìm thấy phòng nào phù hợp trong thời gian này!</h4>
-                            <a href="<%=ctx%>/home" class="btn btn-outline-primary mt-3">Thử tìm ngày khác</a>
-                        </div>
-                    </c:when>
-
-                    <%-- Nếu có phòng trống, vẽ danh sách phòng ra --%>
-                    <c:otherwise>
-                        <c:forEach var="r" items="${availableRooms}">
-                            <div class="col-md-4">
-                                <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
-                                    <%-- LƯU Ý: Nếu ảnh không hiện, có thể biến trong Room.java của bạn tên là imageUrl, imagePath... --%>
-                                    <img src="${r.image}" class="card-img-top" alt="Room" style="height: 220px; object-fit: cover;">
-                                    <div class="card-body d-flex flex-column">
-                                        <%-- ĐÃ FIX LỖI: Bỏ phần roomType gây crash web --%>
-                                        <h5 class="card-title fw-bold">Phòng ${r.roomNumber}</h5>
-                                        <p class="card-text text-muted mb-3">Tận hưởng không gian lưu trú sang trọng, tiện nghi và dịch vụ đẳng cấp 5 sao.</p>
-
-                                        <h4 class="text-danger fw-bold mb-4">
-                                            <fmt:formatNumber value="${r.price}" type="number" pattern="#,##0"/> đ <span class="fs-6 text-muted fw-normal">/ đêm</span>
-                                        </h4>
-
-                                        <form action="<%=ctx%>/booking" method="post" class="mt-auto">
-                                            <input type="hidden" name="roomID" value="${r.roomID}">
-                                            <input type="hidden" name="checkIn" value="${param.checkin}">
-                                            <input type="hidden" name="checkOut" value="${param.checkout}">
-
-                                            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 shadow-sm">
-                                                ĐẶT PHÒNG NGAY
-                                            </button>
-                                        </form>
-
-                                    </div>
-                                </div>
+            
+            <!-- Sort Bar -->
+            <div class="sort-bar">
+                <span>Sắp xếp theo:</span>
+                <select onchange="window.location.href='search?sort=' + this.value">
+                    <option value="">-- Lựa chọn --</option>
+                    <option value="price_asc">Giá: Thấp → Cao</option>
+                    <option value="price_desc">Giá: Cao → Thấp</option>
+                    <option value="rating">Xếp hạng cao nhất</option>
+                    <option value="newest">Mới nhất</option>
+                </select>
+            </div>
+            
+            <!-- Rooms Grid -->
+            <div class="rooms-grid">
+                <c:if test="${empty rooms}">
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <p>❌ Không tìm thấy phòng phù hợp. Vui lòng thử lại với tiêu chí khác.</p>
+                    </div>
+                </c:if>
+                
+                <c:forEach var="room" items="${rooms}">
+                    <div class="room-card" onclick="window.location.href='detail?roomId=${room.id}'">
+                        <img src="https://via.placeholder.com/280x200?text=${room.name}" 
+                             alt="${room.name}" class="room-image">
+                        <div class="room-info">
+                            <div class="room-name">${room.name}</div>
+                            <div class="room-details">
+                                <div>👥 ${room.maxGuests} khách</div>
+                                <div>📐 ${room.size}m²</div>
                             </div>
-                        </c:forEach>
-                    </c:otherwise>
-                </c:choose>
+                            <div class="room-price">$${room.price}/đêm</div>
+                            <div class="room-rating">
+                                ⭐ ${room.rating} (${room.reviews} đánh giá)
+                            </div>
+                            <div class="room-actions">
+                                <a href="detail?roomId=${room.id}" class="btn btn-primary">Chi Tiết</a>
+                                <a href="booking?roomId=${room.id}" class="btn btn-secondary">Đặt Phòng</a>
+                            </div>
+                        </div>
+                    </div>
+                </c:forEach>
             </div>
-        </div>
-
-        <jsp:include page="/includes/footer.jsp"/>
-
-    </body>
+            
+            <!-- Pagination -->
+            <div class="pagination">
+                <a href="?page=1">&laquo; Đầu</a>
+                <a href="?page=${currentPage - 1}">← Trước</a>
+                <c:forEach var="i" begin="1" end="${totalPages}">
+                    <c:choose>
+                        <c:when test="${i == currentPage}">
+                            <span class="active">${i}</span>
+                        </c:when>
+                        <c:otherwise>
+                            <a href="?page=${i}">${i}</a>
+                        </c:otherwise>
+                    </c:choose>
+                </c:forEach>
+                <a href="?page=${currentPage + 1}">Sau →</a>
+                <a href="?page=${totalPages}">Cuối &raquo;</a>
+            </div>
+        </main>
+    </div>
+    <jsp:include page="includes/footer.jsp" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>
