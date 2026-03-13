@@ -13,6 +13,14 @@
         <div class="container mt-5">
             <div class="card shadow-sm p-4 border-0">
                 <h2 class="text-center mb-4 fw-bold">QUẢN LÝ PHÒNG KHÁCH SẠN</h2>
+                
+                <c:if test="${not empty sessionScope.error}">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Lỗi:</strong> ${sessionScope.error}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <c:remove var="error" scope="session"/>
+                </c:if>
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <a href="${pageContext.request.contextPath}/admin/rooms?action=new" class="btn btn-success fw-bold">+ Thêm Phòng Mới</a>
@@ -64,7 +72,11 @@
                                     </td>
                                     <td>
                                         <a href="${pageContext.request.contextPath}/admin/rooms?action=edit&id=${r.roomID}" class="btn btn-warning btn-sm fw-bold">Sửa</a>
-                                        <a href="${pageContext.request.contextPath}/admin/rooms?action=delete&id=${r.roomID}" class="btn btn-danger btn-sm fw-bold" onclick="return confirm('Bạn có chắc chắn muốn xóa phòng ${r.roomNumber} không?');">Xóa</a>
+                                        <form action="${pageContext.request.contextPath}/admin/rooms" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa phòng ${r.roomNumber} không?');">
+                                            <input type="hidden" name="action" value="delete">
+                                            <input type="hidden" name="id" value="${r.roomID}">
+                                            <button type="submit" class="btn btn-danger btn-sm fw-bold">Xóa</button>
+                                        </form>
                                     </td>
                                     </tr>
                                 </c:forEach>

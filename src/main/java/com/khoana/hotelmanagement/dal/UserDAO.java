@@ -106,7 +106,7 @@ public class UserDAO extends DBContext {
             System.out.println("Lỗi register: " + e.getMessage());
             e.printStackTrace();
         }
-        return false; 
+        return false;
     }
 
     // 5. Hàm Đổi Mật Khẩu
@@ -163,7 +163,7 @@ public class UserDAO extends DBContext {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 list.add(new User(
-                        rs.getInt("userID"), 
+                        rs.getInt("userID"),
                         rs.getString("fullName"),
                         rs.getString("email"),
                         rs.getString("password"),
@@ -210,5 +210,74 @@ public class UserDAO extends DBContext {
             System.out.println("Lỗi changeUserRole: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    // 10. Hàm lấy User theo ID (Dành cho Admin Edit)
+    public User getUserByID(int id) {
+        String sql = "SELECT * FROM Users WHERE userID = ?";
+        try {
+            if (connection == null) {
+                return null;
+            }
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new User(
+                        rs.getInt("userID"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("password"),
+                        rs.getInt("roleID")
+                );
+            }
+        } catch (SQLException e) {
+            System.out.println("Lỗi getUserByID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // 11. Hàm Admin Thêm User Mới
+    public boolean insertUserAdmin(User user) {
+        String sql = "INSERT INTO Users (fullName, email, password, roleID) VALUES (?, ?, ?, ?)";
+        try {
+            if (connection == null) {
+                return false;
+            }
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setNString(1, user.getFullName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getPassword());
+            ps.setInt(4, user.getRoleID());
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.out.println("Lỗi insertUserAdmin: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // 12. Hàm Admin Cập nhật User
+    public boolean updateUserProfile(User user) {
+        String sql = "UPDATE Users SET fullName = ?, email = ?, password = ?, roleID = ? WHERE userID = ?";
+        try {
+            if (connection == null) {
+                return false;
+            }
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setNString(1, user.getFullName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getPassword());
+            ps.setInt(4, user.getRoleID());
+            ps.setInt(5, user.getId());
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.out.println("Lỗi updateUserProfile: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
     }
 }

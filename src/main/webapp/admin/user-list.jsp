@@ -13,8 +13,19 @@
             <div class="card shadow-sm p-4 border-0">
                 <h2 class="text-center mb-4 fw-bold">QUẢN LÝ NGƯỜI DÙNG</h2>
 
+                <c:if test="${not empty sessionScope.error}">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Lỗi:</strong> ${sessionScope.error}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <c:remove var="error" scope="session"/>
+                </c:if>
+
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <a href="${pageContext.request.contextPath}/admin/rooms" class="btn btn-primary fw-bold">Quản Lý Phòng</a>
+                    <div>
+                        <a href="${pageContext.request.contextPath}/admin/users?action=new" class="btn btn-success fw-bold me-2">+ Thêm Người Dùng</a>
+                        <a href="${pageContext.request.contextPath}/admin/rooms" class="btn btn-primary fw-bold">Quản Lý Phòng</a>
+                    </div>
                     <a href="${pageContext.request.contextPath}/home" class="btn btn-secondary">Trở Về Trang Chủ</a>
                 </div>
 
@@ -52,16 +63,32 @@
                                             </span>
                                         </td>
                                         <td>
+                                            <%-- Nút Sửa --%>
+                                            <a href="${pageContext.request.contextPath}/admin/users?action=edit&id=${u.id}" class="btn btn-info btn-sm fw-bold">Sửa</a>
                                             <%-- Nút Thay đổi quyền --%>
                                             <c:if test="${u.roleID == 2}">
-                                                <a href="${pageContext.request.contextPath}/admin/users?action=changeRole&id=${u.id}&role=1" class="btn btn-success btn-sm fw-bold" onclick="return confirm('Cấp quyền Admin cho người dùng này?');">Cấp quyền Admin</a>
+                                                <form action="${pageContext.request.contextPath}/admin/users" method="POST" style="display:inline;" onsubmit="return confirm('Cấp quyền Admin cho người dùng này?');">
+                                                    <input type="hidden" name="action" value="changeRole">
+                                                    <input type="hidden" name="id" value="${u.id}">
+                                                    <input type="hidden" name="role" value="1">
+                                                    <button type="submit" class="btn btn-success btn-sm fw-bold">Cấp quyền Admin</button>
+                                                </form>
                                             </c:if>
                                             <c:if test="${u.roleID == 1}">
-                                                <a href="${pageContext.request.contextPath}/admin/users?action=changeRole&id=${u.id}&role=2" class="btn btn-warning btn-sm fw-bold text-dark" onclick="return confirm('Hạ quyền người dùng này xuống User?');">Hạ quyền User</a>
+                                                <form action="${pageContext.request.contextPath}/admin/users" method="POST" style="display:inline;" onsubmit="return confirm('Hạ quyền người dùng này xuống User?');">
+                                                    <input type="hidden" name="action" value="changeRole">
+                                                    <input type="hidden" name="id" value="${u.id}">
+                                                    <input type="hidden" name="role" value="2">
+                                                    <button type="submit" class="btn btn-warning btn-sm fw-bold text-dark">Hạ quyền User</button>
+                                                </form>
                                             </c:if>
                                             
                                             <%-- Nút Xóa --%>
-                                            <a href="${pageContext.request.contextPath}/admin/users?action=delete&id=${u.id}" class="btn btn-danger btn-sm fw-bold ms-1" onclick="return confirm('Bạn có chắc chắn muốn xóa người dùng ${u.fullName} không?');">Xóa</a>
+                                            <form action="${pageContext.request.contextPath}/admin/users" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa người dùng ${u.fullName} không?');">
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="id" value="${u.id}">
+                                                <button type="submit" class="btn btn-danger btn-sm fw-bold ms-1">Xóa</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 </c:forEach>

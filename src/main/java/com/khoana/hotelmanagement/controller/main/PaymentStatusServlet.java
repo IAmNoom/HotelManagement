@@ -1,13 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.khoana.hotelmanagement.controller.main;
 
-/**
- *
- * @author Huyb
- */
 import com.khoana.hotelmanagement.dal.BookingDAO;
 import com.khoana.hotelmanagement.dal.VNPayBillDAO;
 import com.khoana.hotelmanagement.model.User;
@@ -43,18 +35,21 @@ public class PaymentStatusServlet extends HttpServlet {
 
             // 1. Update Booking Status
             BookingDAO bookingDAO = new BookingDAO();
-            bookingDAO.updateBookingStatus(bookingID, "Confirmed");
+
+            // ĐÃ FIX: Đổi từ updateBookingStatus thành updateStatus cho khớp với DAO mới
+            bookingDAO.updateStatus(bookingID, "Confirmed");
 
             // 2. Lưu hóa đơn VNPay
             VNPayBillDAO billDAO = new VNPayBillDAO();
-            VNPay_Bill bill = new VNPay_Bill(vnp_TxnRef, Float.parseFloat(vnp_Amount)/100, vnp_PayDate, "00", bookingID);
+            VNPay_Bill bill = new VNPay_Bill(vnp_TxnRef, Float.parseFloat(vnp_Amount) / 100, vnp_PayDate, "00", bookingID);
             billDAO.createVNPayBill(bill);
 
             // 3. Gửi Email xác nhận
             if (currentUser != null && currentUser.getEmail() != null && currentUser.getEmail().contains("@")) {
                 try {
                     EmailUtils.sendEmail(currentUser.getEmail(), "Thanh toán thành công!", "Phòng của bạn đã được thanh toán và xác nhận (Confirmed).");
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
 
             response.sendRedirect("booking_success.jsp?status=paid");

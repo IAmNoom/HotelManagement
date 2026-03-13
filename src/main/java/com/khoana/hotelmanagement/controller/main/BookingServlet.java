@@ -59,7 +59,9 @@ public class BookingServlet extends HttpServlet {
 
             long daysBetween = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
             if (daysBetween <= 0) {
-                daysBetween = 1;
+                // Ngày trả phòng không hợp lệ (trước hoặc bằng ngày nhận)
+                response.sendRedirect(request.getContextPath() + "/home.jsp?error=invalid_date");
+                return;
             }
 
             RoomDAO roomDAO = new RoomDAO();

@@ -1,13 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.khoana.hotelmanagement.controller.admin;
 
-/**
- *
- * @author Huyb
- */
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -34,28 +26,28 @@ public class UserManagerServlet extends HttpServlet {
         UserDAO dao = new UserDAO();
 
         try {
-            switch (action) {
-                case "delete":
-                    int delId = Integer.parseInt(request.getParameter("id"));
-                    dao.deleteUser(delId);
-                    // Xóa xong thì chuyển hướng lại trang danh sách
+            if ("new".equals(action)) {
+                request.getRequestDispatcher("/admin/user-form.jsp").forward(request, response);
+            } else if ("edit".equals(action)) {
+                try {
+                    int id = Integer.parseInt(request.getParameter("id"));
+                    User existingUser = dao.getUserByID(id);
+                    if (existingUser == null) {
+                        request.getSession().setAttribute("error", "Không tìm thấy người dùng!");
+                        response.sendRedirect(request.getContextPath() + "/admin/users");
+                        return;
+                    }
+                    request.setAttribute("user", existingUser);
+                    request.getRequestDispatcher("/admin/user-form.jsp").forward(request, response);
+                } catch (NumberFormatException e) {
+                    request.getSession().setAttribute("error", "ID người dùng không hợp lệ!");
                     response.sendRedirect(request.getContextPath() + "/admin/users");
-                    break;
-                    
-                case "changeRole":
-                    int userId = Integer.parseInt(request.getParameter("id"));
-                    int newRole = Integer.parseInt(request.getParameter("role"));
-                    dao.changeUserRole(userId, newRole);
-                    // Đổi quyền xong thì chuyển hướng lại trang danh sách
-                    response.sendRedirect(request.getContextPath() + "/admin/users");
-                    break;
-                    
-                default: 
-                    // Lấy danh sách user và đẩy sang trang JSP cho Frontend hiển thị
-                    List<User> listUsers = dao.getAllUsers();
-                    request.setAttribute("listUsers", listUsers);
-                    request.getRequestDispatcher("/admin/user-list.jsp").forward(request, response);
-                    break;
+                }
+            } else {
+                // Lấy danh sách user và đẩy sang trang JSP cho Frontend hiển thị
+                List<User> listUsers = dao.getAllUsers();
+                request.setAttribute("listUsers", listUsers);
+                request.getRequestDispatcher("/admin/user-list.jsp").forward(request, response);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -66,6 +58,52 @@ public class UserManagerServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        doGet(request, response);
+        String action = request.getParameter("action");
+        UserDAO dao = new UserDAO();
+
+        try {
+            if ("insert".equals(action)) {
+                User newUser = new User();
+                newUser.setFullName(request.getParameter("fullName"));
+                newUser.setEmail(request.getParameter("email"));
+                newUser.setPassword(request.getParameter("password")); // Hash if needed
+                newUser.setRoleID(Integer.parseInt(request.getParameter("roleID")));
+                if (dao.checkEmailExist(newUser.getEmail())) {
+                   request.getSession().setAttribute("error", "Email đã tồn tại trong hệ thống!");
+                } else {
+                    dao.insertUserAdmin(newUser);
+                }
+                response.sendRedirect(request.getContextPath() + "/admin/users");
+            } else if ("update".equals(action)) {
+                User user = new User();
+                user.setId(Integer.parseInt(request.getParameter("id")));
+                user.setFullName(request.getParameter("fullName"));
+                user.setEmail(request.getParameter("email"));
+                user.setPassword(request.getParameter("password")); // Hash if needed
+                user.setRoleID(Integer.parseInt(request.getParameter("roleID")));
+                dao.updateUserProfile(user);
+                response.sendRedirect(request.getContextPath() + "/admin/users");
+            } else if ("delete".equals(action)) {
+                int delId = Integer.parseInt(request.getParameter("id"));
+                dao.deleteUser(delId);
+                // Xóa xong thì chuyển hướng lại trang danh sách
+                response.sendRedirect(request.getContextPath() + "/admin/users");
+            } else if ("changeRole".equals(action)) {
+                int userId = Integer.parseInt(request.getParameter("id"));
+                int newRole = Integer.parseInt(request.getParameter("role"));
+                dao.changeUserRole(userId, newRole);
+                // Đổi quyền xong thì chuyển hướng lại trang danh sách
+                response.sendRedirect(request.getContextPath() + "/admin/users");
+            } else {
+                doGet(request, response);
+            }
+        } catch (NumberFormatException e) {
+            request.getSession().setAttribute("error", "ID hoặc Role người dùng không hợp lệ!");
+            response.sendRedirect(request.getContextPath() + "/admin/users");
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.getSession().setAttribute("error", "Đã xảy ra lỗi hệ thống!");
+            response.sendRedirect(request.getContextPath() + "/admin/users");
+        }
     }
 }

@@ -1,13 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.khoana.hotelmanagement.controller.main;
 
-/**
- *
- * @author Huyb
- */
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -25,28 +17,30 @@ public class SearchServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // 1. Lấy dữ liệu từ form (Viết thường cho khớp với name="checkin" trong HTML)
+        // 1. Lấy dữ liệu ngày tháng
         String checkin = request.getParameter("checkin");
         String checkout = request.getParameter("checkout");
-        String guests = request.getParameter("guests");
+
+        // 2. Lấy thêm dữ liệu Lọc (Giá tiền)
+        String priceMin = request.getParameter("priceMin");
+        String priceMax = request.getParameter("priceMax");
 
         RoomDAO roomDAO = new RoomDAO();
         List<Room> roomList;
 
-        // 2. Logic tìm kiếm phòng
-        if (checkin == null || checkout == null || checkin.trim().isEmpty() || checkout.trim().isEmpty()) {
-            roomList = roomDAO.getAllRooms();
-        } else {
-            roomList = roomDAO.searchAvailableRoom(checkin, checkout);
-        }
+        // 3. Gọi hàm lọc xịn xò vừa tạo ở DAO
+        roomList = roomDAO.searchAdvancedRooms(checkin, checkout, priceMin, priceMax);
 
-        // 3. Truyền dữ liệu sang search.jsp
-        request.setAttribute("availableRooms", roomList); 
+        // 4. ĐÃ FIX LỖI TÊN BIẾN: Bắt buộc phải là "rooms" để khớp với giao diện search.jsp
+        request.setAttribute("rooms", roomList);
+
+        // Trả lại các giá trị khách vừa nhập để hiển thị lên giao diện cho đẹp
         request.setAttribute("checkin", checkin);
         request.setAttribute("checkout", checkout);
-        request.setAttribute("guests", guests);
+        request.setAttribute("priceMin", priceMin);
+        request.setAttribute("priceMax", priceMax);
 
-        // 4. Chuyển hướng sang giao diện
+        // 5. Chuyển hướng
         request.getRequestDispatcher("/search.jsp").forward(request, response);
     }
 

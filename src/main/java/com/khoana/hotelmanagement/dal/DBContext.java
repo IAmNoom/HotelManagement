@@ -21,14 +21,14 @@ public class DBContext {
             connection = DriverManager.getConnection(url, user, pass);
 
         } catch (ClassNotFoundException | SQLException ex) {
-            // In lỗi chi tiết ra màn hình Output để dễ sửa
+            // Display error chi tiết ra màn hình
             System.out.println("Lỗi kết nối DB:");
             ex.printStackTrace();
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    // Hàm main để test kết nối nhanh (Chuột phải file này -> Run File)
+    // Hàm main để test kết nối nhanh
     public static void main(String[] args) {
         try {
             System.out.println("Đang thử kết nối đến SQL Server...");
